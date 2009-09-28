@@ -37,28 +37,33 @@ zend_function_entry redis_functions[] = {
      PHP_ME(Redis, ping, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, get, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, set, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, add, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, getMultiple, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, setnx, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, mget, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, exists, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, delete, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, incr, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, decr, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, type, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, getKeys, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, getSort, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, lPush, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, lPop, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, lSize, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, lRemove, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, listTrim, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, lGet, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, lGetRange, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, sAdd, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, sSize, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, sRemove, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, sContains, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, sGetMembers, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, keys, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, lpush, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, lpop, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, llen, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, lrem, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, lindex, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, lrange, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, sadd, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, scard, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, srem, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, sismember, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, smembers, NULL, ZEND_ACC_PUBLIC)
      PHP_MALIAS(Redis, open, connect, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, del, delete, NULL, ZEND_ACC_PUBLIC)
+     {NULL, NULL, NULL}
+};
+
+zend_function_entry redis_additional_functions[] = {
+     PHP_ME(Redis, ltrim, NULL, ZEND_ACC_PUBLIC)
+     PHP_ME(Redis, sort, NULL, ZEND_ACC_PUBLIC)
      {NULL, NULL, NULL}
 };
 
@@ -394,6 +399,14 @@ PHP_MINIT_FUNCTION(redis)
         NULL,
         redis_sock_name, module_number
     );
+    
+    static zend_internal_function sort_func = {0};
+    sort_func.type = ZEND_INTERNAL_FUNCTION;
+    sort_func.function_name = "sort";
+    sort_func.scope = redis_ce;
+    sort_func.handler = ZEND_MN(Redis_sort);
+     
+    zend_register_functions(redis_ce, redis_additional_functions, &redis_ce->function_table, 0);
 
     return SUCCESS;
 }
@@ -587,7 +600,7 @@ PHP_METHOD(Redis, get)
 
 /* {{{ proto boolean Redis::add(string key, string value)
  */
-PHP_METHOD(Redis, add)
+PHP_METHOD(Redis, setnx)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -738,9 +751,9 @@ PHP_METHOD(Redis, decr)
 }
 /* }}} */
 
-/* {{{ proto array Redis::getMultiple(array keys)
+/* {{{ proto array Redis::mget(array keys)
  */
-PHP_METHOD(Redis, getMultiple)
+PHP_METHOD(Redis, mget)
 {
     zval *object, *array, **data;
     HashTable *arr_hash;
@@ -862,9 +875,9 @@ PHP_METHOD(Redis, delete)
 }
 /* }}} */
 
-/* {{{ proto array Redis::getKeys(string pattern)
+/* {{{ proto array Redis::keys(string pattern)
  */
-PHP_METHOD(Redis, getKeys)
+PHP_METHOD(Redis, keys)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -945,9 +958,9 @@ PHP_METHOD(Redis, type)
 }
 /* }}} */
 
-/* {{{ proto boolean Redis::lPush(string key , string value [, int type=0])
+/* {{{ proto boolean Redis::lpush(string key , string value [, int type=0])
  */
-PHP_METHOD(Redis, lPush)
+PHP_METHOD(Redis, lpush)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -994,9 +1007,9 @@ PHP_METHOD(Redis, lPush)
 }
 /* }}} */
 
-/* {{{ proto string Redis::lPOP(string key , [, int type=0])
+/* {{{ proto string Redis::lpop(string key , [, int type=0])
  */
-PHP_METHOD(Redis, lPop)
+PHP_METHOD(Redis, lpop)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1037,9 +1050,9 @@ PHP_METHOD(Redis, lPop)
 }
 /* }}} */
 
-/* {{{ proto int Redis::lSize(string key)
+/* {{{ proto int Redis::llen(string key)
  */
-PHP_METHOD(Redis, lSize)
+PHP_METHOD(Redis, llen)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1072,9 +1085,9 @@ PHP_METHOD(Redis, lSize)
 }
 /* }}} */
 
-/* {{{ proto boolean Redis::lRemove(string list, string value, int count = 0)
+/* {{{ proto boolean Redis::lrem(string list, string value, int count = 0)
  */
-PHP_METHOD(Redis, lRemove)
+PHP_METHOD(Redis, lrem)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1110,9 +1123,9 @@ PHP_METHOD(Redis, lRemove)
 }
 /* }}} */
 
-/* {{{ proto boolean Redis::listTrim(string key , int start , int end)
+/* {{{ proto boolean Redis::ltrim(string key , int start , int end)
  */
-PHP_METHOD(Redis, listTrim)
+PHP_METHOD(Redis, ltrim)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1147,9 +1160,9 @@ PHP_METHOD(Redis, listTrim)
 }
 /* }}} */
 
-/* {{{ proto string Redis::lGet(string key , int index)
+/* {{{ proto string Redis::lindex(string key , int index)
  */
-PHP_METHOD(Redis, lGet)
+PHP_METHOD(Redis, lindex)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1184,9 +1197,9 @@ PHP_METHOD(Redis, lGet)
 }
 /* }}} */
 
-/* {{{ proto array Redis::lGetRange(string key, int start , int end)
+/* {{{ proto array Redis::lrange(string key, int start , int end)
  */
-PHP_METHOD(Redis, lGetRange)
+PHP_METHOD(Redis, lrange)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1216,9 +1229,9 @@ PHP_METHOD(Redis, lGetRange)
 }
 /* }}} */
 
-/* {{{ proto boolean Redis::sAdd(string key , string value)
+/* {{{ proto boolean Redis::sadd(string key , string value)
  */
-PHP_METHOD(Redis, sAdd)
+PHP_METHOD(Redis, sadd)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1257,9 +1270,9 @@ PHP_METHOD(Redis, sAdd)
 }
 /* }}} */
 
-/* {{{ proto int Redis::sSize(string key)
+/* {{{ proto int Redis::scard(string key)
  */
-PHP_METHOD(Redis, sSize)
+PHP_METHOD(Redis, scard)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1292,9 +1305,9 @@ PHP_METHOD(Redis, sSize)
 }
 /* }}} */
 
-/* {{{ proto boolean Redis::sRemove(string set, string value)
+/* {{{ proto boolean Redis::srem(string set, string value)
  */
-PHP_METHOD(Redis, sRemove)
+PHP_METHOD(Redis, srem)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1330,9 +1343,9 @@ PHP_METHOD(Redis, sRemove)
 }
 /* }}} */
 
-/* {{{ proto boolean Redis::sContains(string set, string value)
+/* {{{ proto boolean Redis::sismember(string set, string value)
  */
-PHP_METHOD(Redis, sContains)
+PHP_METHOD(Redis, sismember)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1368,9 +1381,9 @@ PHP_METHOD(Redis, sContains)
 }
 /* }}} */
 
-/* {{{ proto array Redis::sGetMembers(string set)
+/* {{{ proto array Redis::smembers(string set)
  */
-PHP_METHOD(Redis, sGetMembers)
+PHP_METHOD(Redis, smembers)
 {
     zval *object;
     RedisSock *redis_sock;
@@ -1400,10 +1413,10 @@ PHP_METHOD(Redis, sGetMembers)
 }
 /* }}} */
 
-/* {{{ proto array Redis::getSort(string key [,order = 0, pattern = "*", start=0,
+/* {{{ proto array Redis::sort(string key [,order = 0, pattern = "*", start=0,
  *                                                                       end = 0])
  */
-PHP_METHOD(Redis, getSort)
+PHP_METHOD(Redis, sort)
 {
     zval *object;
     RedisSock *redis_sock;
