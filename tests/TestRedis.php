@@ -54,12 +54,12 @@ class Redis_Test extends PHPUnit_Framework_TestCase
         $this->assertEquals('42', $this->redis->get('key'));
     }
 
-    public function testAdd()
+    public function testSetnx()
     {
         $key = 'key' . rand();
 
-        $this->assertTrue($this->redis->add($key, 'val'));
-        $this->assertFalse($this->redis->add($key, 'val'));
+        $this->assertTrue($this->redis->setnx($key, 'val'));
+        $this->assertFalse($this->redis->setnx($key, 'val'));
     }
 
     public function testIncr()
@@ -102,19 +102,19 @@ class Redis_Test extends PHPUnit_Framework_TestCase
 
         $this->assertFalse($this->redis->exists($key));
 
-        $this->redis->add($key, 'val');
+        $this->redis->setnx($key, 'val');
 
         $this->assertTrue($this->redis->exists($key));
     }
 
-    public function testGetKeys()
+    public function testKeys()
     {
-        $keys = $this->redis->getKeys('a*');
+        $keys = $this->redis->keys('a*');
         $key  = 'a' . rand();
 
-        $this->redis->add($key, 'val');
+        $this->redis->setnx($key, 'val');
 
-        $keys2 = $this->redis->getKeys('a*');
+        $keys2 = $this->redis->keys('a*');
 
         $this->assertEquals((count($keys) + 1), count($keys2));
     }
@@ -137,60 +137,60 @@ class Redis_Test extends PHPUnit_Framework_TestCase
         $this->assertEquals(1, $this->redis->type('key'));
     }
 
-    public function testlPop()
+    public function testLpop()
     {
         $this->redis->delete('list');
 
-        $this->redis->lPush('list', 'val');
-        $this->redis->lPush('list', 'val2');
-        $this->redis->lPush('list', 'val3', 1);
+        $this->redis->lpush('list', 'val');
+        $this->redis->lpush('list', 'val2');
+        $this->redis->lpush('list', 'val3', 1);
 
-        $this->assertEquals('val3', $this->redis->lPop('list', 1));
-        $this->assertEquals('val2', $this->redis->lPop('list'));
-        $this->assertEquals('val', $this->redis->lPop('list'));
+        $this->assertEquals('val3', $this->redis->lpop('list', 1));
+        $this->assertEquals('val2', $this->redis->lpop('list'));
+        $this->assertEquals('val', $this->redis->lpop('list'));
     }
 
-    public function testlSize()
+    public function testLlen()
     {
         $this->redis->delete('list');
 
-        $this->redis->lPush('list', 'val');
+        $this->redis->lpush('list', 'val');
         
-        $this->assertEquals(1, $this->redis->lSize('list'));
+        $this->assertEquals(1, $this->redis->llen('list'));
 
-        $this->redis->lPush('list', 'val');
+        $this->redis->lpush('list', 'val');
         
-        $this->assertEquals(2, $this->redis->lSize('list'));
+        $this->assertEquals(2, $this->redis->llen('list'));
     }
 
-    public function testlistTrim()
+    public function testLtrim()
     {
         $this->redis->delete('list');
 
-        $this->redis->lPush('list', 'val');
-        $this->redis->lPush('list', 'val2');
-        $this->redis->lPush('list', 'val3');
+        $this->redis->lpush('list', 'val');
+        $this->redis->lpush('list', 'val2');
+        $this->redis->lpush('list', 'val3');
 
-        $this->redis->listTrim('list', 0, 0);
+        $this->redis->ltrim('list', 0, 0);
   
-        $this->assertEquals(1, $this->redis->lSize('list'));
-        $this->assertEquals('val', $this->redis->lPop('list'));
+        $this->assertEquals(1, $this->redis->llen('list'));
+        $this->assertEquals('val', $this->redis->lpop('list'));
     }
 
-    public function testlGet()
+    public function testLindex()
     {
         $this->redis->delete('list');
 
-        $this->redis->lPush('list', 'val');
-        $this->redis->lPush('list', 'val2');
-        $this->redis->lPush('list', 'val3');
+        $this->redis->lpush('list', 'val');
+        $this->redis->lpush('list', 'val2');
+        $this->redis->lpush('list', 'val3');
 
-        $this->assertEquals('val', $this->redis->lGet('list', 0));
-        $this->assertEquals('val2', $this->redis->lGet('list', 1));
-        $this->assertEquals('val3', $this->redis->lGet('list', 2));
+        $this->assertEquals('val', $this->redis->lindex('list', 0));
+        $this->assertEquals('val2', $this->redis->lindex('list', 1));
+        $this->assertEquals('val3', $this->redis->lindex('list', 2));
 
-        $this->redis->lPush('list', 'val4');
-        $this->assertEquals('val4', $this->redis->lGet('list', 3));
+        $this->redis->lpush('list', 'val4');
+        $this->assertEquals('val4', $this->redis->lindex('list', 3));
     }
 
     public function testsAdd()
@@ -199,54 +199,54 @@ class Redis_Test extends PHPUnit_Framework_TestCase
 
         $this->redis->sAdd('set', 'val');
 
-        $this->assertTrue($this->redis->sContains('set', 'val'));
-        $this->assertFalse($this->redis->sContains('set', 'val2'));
+        $this->assertTrue($this->redis->sismember('set', 'val'));
+        $this->assertFalse($this->redis->sismember('set', 'val2'));
 
         $this->redis->sAdd('set', 'val2');
 
-        $this->assertTrue($this->redis->sContains('set', 'val2'));
+        $this->assertTrue($this->redis->sismember('set', 'val2'));
     }
 
-    public function testsSize()
+    public function testScard()
     {
         $this->redis->delete('set');
 
         $this->redis->sAdd('set', 'val');
         
-        $this->assertEquals(1, $this->redis->sSize('set'));
+        $this->assertEquals(1, $this->redis->scard('set'));
 
         $this->redis->sAdd('set', 'val2');
         
-        $this->assertEquals(2, $this->redis->sSize('set'));
+        $this->assertEquals(2, $this->redis->scard('set'));
     }
 
-    public function testsRemove()
+    public function testSrem()
     {
         $this->redis->delete('set');
 
         $this->redis->sAdd('set', 'val');
         $this->redis->sAdd('set', 'val2');
         
-        $this->redis->sRemove('set', 'val');
+        $this->redis->srem('set', 'val');
 
-        $this->assertEquals(1, $this->redis->sSize('set'));
+        $this->assertEquals(1, $this->redis->scard('set'));
 
-        $this->redis->sRemove('set', 'val2');
+        $this->redis->srem('set', 'val2');
 
-        $this->assertEquals(0, $this->redis->sSize('set'));
+        $this->assertEquals(0, $this->redis->scard('set'));
     }
 
-    public function testsContains()
+    public function testSismember()
     {
         $this->redis->delete('set');
 
         $this->redis->sAdd('set', 'val');
         
-        $this->assertTrue($this->redis->sContains('set', 'val'));
-        $this->assertFalse($this->redis->sContains('set', 'val2'));
+        $this->assertTrue($this->redis->sismember('set', 'val'));
+        $this->assertFalse($this->redis->sismember('set', 'val2'));
     }
 
-    public function testsGetMembers()
+    public function testSmembers()
     {
         $this->redis->delete('set');
 
@@ -256,7 +256,7 @@ class Redis_Test extends PHPUnit_Framework_TestCase
 
         $array = array('val', 'val2', 'val3');
         
-        $this->assertEquals($array, $this->redis->sGetMembers('set'));
+        $this->assertEquals($array, $this->redis->smembers('set'));
     }
 }
 
