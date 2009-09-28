@@ -63,20 +63,21 @@ zend_function_entry redis_functions[] = {
      PHP_ME(Redis, delete, NULL, ZEND_ACC_PUBLIC)
      PHP_MALIAS(Redis, add, setnx, NULL, ZEND_ACC_PUBLIC)
      PHP_MALIAS(Redis, getMultiple, mget, NULL, ZEND_ACC_PUBLIC)
-     PHP_MALIAS(Redis, getKeys,     keys);
-     PHP_MALIAS(Redis, getSort,     sort);
-     PHP_MALIAS(Redis, lPush,       lpush);
-     PHP_MALIAS(Redis, lPop,        lpop);
-     PHP_MALIAS(Redis, lSize,       llen);
-     PHP_MALIAS(Redis, lRemove,     lrem);
-     PHP_MALIAS(Redis, listTrim,    ltrim);
-     PHP_MALIAS(Redis, lGet,        lindex);
-     PHP_MALIAS(Redis, lGetRange,   lrange);
-     PHP_MALIAS(Redis, sAdd,        sadd);
-     PHP_MALIAS(Redis, sSize,       scard);
-     PHP_MALIAS(Redis, sRemove,     srem);
-     PHP_MALIAS(Redis, sContains,   sismember);
-     PHP_MALIAS(Redis, sGetMembers, smembers);
+     PHP_MALIAS(Redis, getKeys,     keys, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, getSort,     sort, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, lSize,       llen, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, lRemove,     lrem, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, listTrim,    ltrim, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, lGet,        lindex, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, lGetRange,   lrange, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, sSize,       scard, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, sRemove,     srem, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, sContains,   sismember, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, sGetMembers, smembers, NULL, ZEND_ACC_PUBLIC)
+     // PHP's method names are case insensitive, no need to alias these
+     // PHP_MALIAS(Redis, lPush,       lpush, NULL, ZEND_ACC_PUBLIC)
+     // PHP_MALIAS(Redis, lPop,        lpop, NULL, ZEND_ACC_PUBLIC)
+     // PHP_MALIAS(Redis, sAdd,        sadd, NULL, ZEND_ACC_PUBLIC)
 
      {NULL, NULL, NULL}
 };
