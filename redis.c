@@ -31,16 +31,18 @@ static zend_class_entry *redis_exception_ce;
 static zend_class_entry *spl_ce_RuntimeException = NULL;
 
 zend_function_entry redis_functions[] = {
+     // PHP-specific
      PHP_ME(Redis, __construct, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, connect, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, open, connect, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, close, NULL, ZEND_ACC_PUBLIC)
+     // Redis API
      PHP_ME(Redis, ping, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, get, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, set, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, setnx, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, mget, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, exists, NULL, ZEND_ACC_PUBLIC)
-     PHP_ME(Redis, delete, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, incr, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, decr, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, type, NULL, ZEND_ACC_PUBLIC)
@@ -56,8 +58,26 @@ zend_function_entry redis_functions[] = {
      PHP_ME(Redis, srem, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, sismember, NULL, ZEND_ACC_PUBLIC)
      PHP_ME(Redis, smembers, NULL, ZEND_ACC_PUBLIC)
-     PHP_MALIAS(Redis, open, connect, NULL, ZEND_ACC_PUBLIC)
      PHP_MALIAS(Redis, del, delete, NULL, ZEND_ACC_PUBLIC)
+     // Backward compatibility
+     PHP_ME(Redis, delete, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, add, setnx, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, getMultiple, mget, NULL, ZEND_ACC_PUBLIC)
+     PHP_MALIAS(Redis, getKeys,     keys);
+     PHP_MALIAS(Redis, getSort,     sort);
+     PHP_MALIAS(Redis, lPush,       lpush);
+     PHP_MALIAS(Redis, lPop,        lpop);
+     PHP_MALIAS(Redis, lSize,       llen);
+     PHP_MALIAS(Redis, lRemove,     lrem);
+     PHP_MALIAS(Redis, listTrim,    ltrim);
+     PHP_MALIAS(Redis, lGet,        lindex);
+     PHP_MALIAS(Redis, lGetRange,   lrange);
+     PHP_MALIAS(Redis, sAdd,        sadd);
+     PHP_MALIAS(Redis, sSize,       scard);
+     PHP_MALIAS(Redis, sRemove,     srem);
+     PHP_MALIAS(Redis, sContains,   sismember);
+     PHP_MALIAS(Redis, sGetMembers, smembers);
+
      {NULL, NULL, NULL}
 };
 
