@@ -7,13 +7,13 @@ Forked from [Alfonso Jimenez](http://www.alfonsojimenez.com/)'s implementation, 
 
 ## Installation
 
-phpize
-./configure
-make && make install
+    phpize
+    ./configure
+    make && make install
 
-Then enable extension=redis.so in your php.ini.
+Then enable `extension=redis.so` in your `php.ini`.
 
-If you are using MacPorts, instead of editing the master php.ini you can copy the bundled redis.ini into /opt/local/var/db/php5/ and PHP will pick it up.
+If you are using MacPorts, instead of editing the master `php.ini` you can copy the bundled `redis.ini` into `/opt/local/var/db/php5/` and PHP will pick it up.
 
 ## See also
 
