@@ -421,12 +421,6 @@ PHP_MINIT_FUNCTION(redis)
         redis_sock_name, module_number
     );
     
-    static zend_internal_function sort_func = {0};
-    sort_func.type = ZEND_INTERNAL_FUNCTION;
-    sort_func.function_name = "sort";
-    sort_func.scope = redis_ce;
-    sort_func.handler = ZEND_MN(Redis_sort);
-     
     zend_register_functions(redis_ce, redis_additional_functions, &redis_ce->function_table, 0);
 
     return SUCCESS;
