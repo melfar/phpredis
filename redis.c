@@ -568,9 +568,11 @@ PHP_METHOD(Redis, set)
     }
 
     if (response[0] == 0x2b) {
-        RETURN_TRUE;
+      efree(response);
+      RETURN_TRUE;
     } else {
-        RETURN_FALSE;
+      efree(response);
+      RETURN_FALSE;
     }
 }
 /* }}} */
@@ -604,8 +606,6 @@ PHP_METHOD(Redis, get)
     if ((response = redis_sock_read(redis_sock, &response_len TSRMLS_CC)) == NULL) {
         RETURN_FALSE;
     }
-
-    // spprintf(&response, 0, "n");
 
     if (strcmp(response, "nil") != 0) {
         RETURN_STRING(response, 0);
@@ -658,6 +658,7 @@ PHP_METHOD(Redis, setnx)
  */
 PHP_METHOD(Redis, ping)
 {
+  RETURN_FALSE;
     zval *object;
     RedisSock *redis_sock;
     char *cmd, *response;
@@ -674,13 +675,12 @@ PHP_METHOD(Redis, ping)
 
     if (redis_sock->stream) {
        char cmd[] = "PING\r\n";
-       char buf[8];
 
        redis_sock_write(redis_sock, cmd);
 
        response = redis_sock_read(redis_sock, &response_len TSRMLS_CC);
 
-       RETURN_STRING(response, 1);
+       RETURN_STRING(response, 0);
     } else {
        php_error_docref(NULL TSRMLS_CC, E_ERROR, "The object is not connected");
        RETURN_FALSE;
@@ -937,8 +937,9 @@ PHP_METHOD(Redis, keys)
 
     zval *keys;
     MAKE_STD_ZVAL(keys);
-    ZVAL_STRING(keys, response, 1);
+    ZVAL_STRING(keys, response, 0);
     php_explode(delimiter, keys, return_value, -1);
+    efree(response);
 }
 /* }}} */
 
