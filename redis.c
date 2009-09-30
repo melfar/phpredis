@@ -261,16 +261,14 @@ PHPAPI char *redis_sock_read(RedisSock *redis_sock, int *buf_len TSRMLS_DC)
  */
 PHPAPI char *redis_sock_read_bulk_reply(RedisSock *redis_sock, int bytes)
 {
-    char inbuf[1024], *response;
+    char buf[1024], *response;
     int buf_len;
 
     if (bytes <= 0) {
         response = estrdup("nil");
     } else {
-        char * reply = malloc(bytes);
-        reply = php_stream_gets(redis_sock->stream, inbuf, 1024);
-
-        response = estrndup(reply, (strlen(reply)-2));
+        if (!php_stream_gets(redis_sock->stream, buf, 1024))  return NULL;
+        response = estrndup(buf, (strlen(buf)-2));
     }
 
     return response;
