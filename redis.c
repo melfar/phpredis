@@ -259,19 +259,26 @@ PHPAPI char *redis_sock_read(RedisSock *redis_sock, int *buf_len TSRMLS_DC)
 /**
  * redis_sock_read_bulk_reply
  */
-PHPAPI char *redis_sock_read_bulk_reply(RedisSock *redis_sock, int bytes)
+PHPAPI char *redis_sock_read_bulk_reply(RedisSock *redis_sock, int data_len)
 {
-    char buf[1024], *response;
-    int buf_len;
+    if (data_len <= 0)  return estrdup("nil");
 
-    if (bytes <= 0) {
-        response = estrdup("nil");
-    } else {
-        if (!php_stream_gets(redis_sock->stream, buf, 1024))  return NULL;
-        response = estrndup(buf, (strlen(buf)-2));
-    }
+    char *data;
+    int i, size;
 
-    return response;
+  	/* data_len + \r\n + \0 */
+  	data = emalloc(data_len + 3);
+
+  	for (i=0; i<data_len+2; i+=size) {
+  		if ((size = php_stream_read(redis_sock->stream, data + i, data_len + 2 - i)) == 0) {
+  			efree(data);
+  			return NULL;
+  		}
+  	}
+
+  	data[data_len] = '\0';
+
+    return data;
 }
 
 /**
