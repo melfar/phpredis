@@ -228,31 +228,28 @@ PHPAPI int redis_sock_disconnect(RedisSock *redis_sock TSRMLS_DC)
  */
 PHPAPI char *redis_sock_read(RedisSock *redis_sock, int *buf_len TSRMLS_DC)
 {
-    char buf[1024], *response, *s;
-    int length;
+    char buf[1024], *response;
 
     if (!php_stream_gets(redis_sock->stream, buf, 1024))  return NULL;
-    s = estrndup(buf, (strlen(buf)-2));
+    buf[strlen(buf)-2] = '\0';
 
-    switch(s[0]) {
+    switch(buf[0]) {
         case '-':
             printf("error");
         break;
         case '+':
-        case ':':    
+        case ':':
             /* Single Line Reply */
-            return s; // :melfar: ANOTHER POINT OF RETURN
+            return estrdup(buf); // :melfar: ANOTHER POINT OF RETURN
         break;
         case '$':
             /* Bulk Reply */
-            response = redis_sock_read_bulk_reply(redis_sock, atoi(s+1));
+            response = redis_sock_read_bulk_reply(redis_sock, atoi(buf+1));
         break;
         default:
-            printf("protocol error, got '%c' as reply type byte\n", s[0]);
+            printf("protocol error, got '%c' as reply type byte\n", buf[0]);
        }
        
-       efree(s);
-
        return response;
 }
 
@@ -287,23 +284,16 @@ PHPAPI char *redis_sock_read_bulk_reply(RedisSock *redis_sock, int data_len)
 PHPAPI int redis_sock_read_multibulk_reply(INTERNAL_FUNCTION_PARAMETERS,
                                       RedisSock *redis_sock, int *buf_len TSRMLS_DC)
 {
-    char inbuf[1024], response[1024], *s;
+    char inbuf[1024], *s;
     int length, response_len;
 
-    s = php_stream_gets(redis_sock->stream, inbuf, 1024);
-    s = estrndup(s, (strlen(s)-2));
+    if (!php_stream_gets(redis_sock->stream, inbuf, 1024)) return -1;
 
-    if (s[0] != '*') {
+    if (inbuf[0] != '*') {
         return -1;
     }
 
-    length = strlen(s) - 1;
-
-    char *sNumElems = (char*)malloc(sizeof(char) * length);
-
-    strncpy(sNumElems, s + 1, length);
-
-    int numElems = atoi(sNumElems);
+    int numElems = atoi(inbuf + 1);
 
     array_init(return_value);
 
@@ -658,7 +648,6 @@ PHP_METHOD(Redis, setnx)
  */
 PHP_METHOD(Redis, ping)
 {
-  RETURN_FALSE;
     zval *object;
     RedisSock *redis_sock;
     char *cmd, *response;
