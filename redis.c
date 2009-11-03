@@ -243,6 +243,7 @@ PHPAPI char *redis_sock_read(RedisSock *redis_sock, int *buf_len TSRMLS_DC)
         case ':':
             /* Single Line Reply */
             return estrdup(buf); // :melfar: ANOTHER POINT OF RETURN
+            // :melfar: returning the leading '+' or ':' here is by (not mine) design...
         break;
         case '$':
             /* Bulk Reply */
@@ -250,6 +251,7 @@ PHPAPI char *redis_sock_read(RedisSock *redis_sock, int *buf_len TSRMLS_DC)
         break;
         default:
             printf("protocol error, got '%c' as reply type byte\n", buf[0]);
+            zend_throw_exception(redis_exception_ce, "Protocol error", 0 TSRMLS_CC);
        }
        
        return response;
@@ -260,7 +262,7 @@ PHPAPI char *redis_sock_read(RedisSock *redis_sock, int *buf_len TSRMLS_DC)
  */
 PHPAPI char *redis_sock_read_bulk_reply(RedisSock *redis_sock, int data_len)
 {
-    if (data_len <= 0)  return estrdup("nil");
+    if (data_len < 0)  return NULL;
 
     char *data;
     int i, size;
@@ -600,12 +602,7 @@ PHP_METHOD(Redis, get)
         RETURN_FALSE;
     }
 
-    if (strcmp(response, "nil") != 0) {
-        RETURN_STRING(response, 0);
-    } else {
-        efree(response);
-        RETURN_BOOL(false);
-    }
+    RETURN_STRING(response, 1);
 }
 /* }}} */
 
@@ -1061,11 +1058,7 @@ PHP_METHOD(Redis, lpop)
         RETURN_FALSE;
     }
 
-    if (strcmp(response, "nil") != 0) {
-        RETURN_STRING(response, 1);
-    } else {
-        RETURN_STRING("", 1);
-    }
+    RETURN_STRING(response, 1);
 }
 /* }}} */
 
@@ -1212,11 +1205,7 @@ PHP_METHOD(Redis, lindex)
         RETURN_FALSE;
     }
 
-    if (strcmp(response, "nil") != 0) {
-        RETURN_STRING(response, 1);
-    } else {
-        RETURN_STRING("", 1);
-    }
+    RETURN_STRING(response, 1);
 }
 /* }}} */
 
