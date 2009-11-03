@@ -23,6 +23,8 @@
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
+#include "ext/standard/php_var.h"
+#include "ext/standard/php_smart_str.h"
 #include "php_redis.h"
 
 static int le_redis_sock;
@@ -533,20 +535,21 @@ PHP_METHOD(Redis, set)
 {
     zval *object;
     RedisSock *redis_sock;
-    char *key = NULL, *val = NULL, *cmd, *response;
+    char *key = NULL, *cmd, *response;
+    zval *val = NULL;
     int key_len, val_len, cmd_len, response_len;
 
-    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Oss",
+    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Osz",
                                      &object, redis_ce, &key, &key_len,
-                                     &val, &val_len) == FAILURE) {
+                                     &val) == FAILURE) {
         RETURN_FALSE;
     }
-
+    
     if (redis_sock_get(object, &redis_sock TSRMLS_CC) < 0) {
         RETURN_FALSE;
     }
-
-    cmd_len = spprintf(&cmd, 0, "SET %s %d\r\n%s\r\n", key, strlen(val), val);
+    
+    cmd_len = Redis_spprintf_key_value(&cmd, 0, "SET %s %d\r\n%s\r\n", key, val);
 
     if (redis_sock_write(redis_sock, cmd) < 0) {
         RETURN_FALSE;
@@ -612,12 +615,13 @@ PHP_METHOD(Redis, setnx)
 {
     zval *object;
     RedisSock *redis_sock;
-    char *key = NULL, *val = NULL, *cmd, *response;
+    char *key = NULL, *cmd, *response;
+    zval *val = NULL;
     int key_len, val_len, cmd_len, response_len;
 
-    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Oss",
+    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Osz",
                                      &object, redis_ce, &key, &key_len,
-                                     &val, &val_len) == FAILURE) {
+                                     &val) == FAILURE) {
         RETURN_FALSE;
     }
 
@@ -625,7 +629,7 @@ PHP_METHOD(Redis, setnx)
         RETURN_FALSE;
     }
 
-    cmd_len = spprintf(&cmd, 0, "SETNX %s %d\r\n%s\r\n", key, strlen(val), val);
+    cmd_len = Redis_spprintf_key_value(&cmd, 0, "SETNX %s %d\r\n%s\r\n", key, val);
 
     if (redis_sock_write(redis_sock, cmd) < 0) {
         RETURN_FALSE;
@@ -637,9 +641,11 @@ PHP_METHOD(Redis, setnx)
     }
 
     if (response[1] == 0x31) {
-        RETURN_TRUE;
+      efree(response);
+      RETURN_TRUE;
     } else {
-        RETURN_FALSE;
+      efree(response);
+      RETURN_FALSE;
     }
 }
 /* }}} */
@@ -917,7 +923,7 @@ PHP_METHOD(Redis, keys)
     if ((response = redis_sock_read(redis_sock, &response_len TSRMLS_CC)) == NULL) {
         RETURN_FALSE;
     }
-
+    
     array_init(return_value);
 
     zval *delimiter;
@@ -980,12 +986,13 @@ PHP_METHOD(Redis, lpush)
 {
     zval *object;
     RedisSock *redis_sock;
-    char *key = NULL, *val = NULL, *cmd, *response;
+    char *key = NULL, *cmd, *response;
+    zval *val = NULL;
     int key_len, val_len, type = 0, cmd_len, response_len;
 
-    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Oss|l",
+    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Osz|l",
                                      &object, redis_ce, &key, &key_len,
-                                     &val, &val_len, &type) == FAILURE) {
+                                     &val, &type) == FAILURE) {
         RETURN_FALSE;
     }
 
@@ -994,15 +1001,9 @@ PHP_METHOD(Redis, lpush)
     }
 
     if (type == 0) {
-        cmd_len = spprintf(&cmd, 0, "RPUSH %s %d\r\n%s\r\n",
-                     key,
-                     strlen(val),
-                     val);
+        cmd_len = Redis_spprintf_key_value(&cmd, 0, "RPUSH %s %d\r\n%s\r\n", key, val);
     } else if (type == 1) {
-        cmd_len = spprintf(&cmd, 0, "LPUSH %s %d\r\n%s\r\n",
-                     key,
-                     strlen(val),
-                     val);
+        cmd_len = Redis_spprintf_key_value(&cmd, 0, "LPUSH %s %d\r\n%s\r\n", key, val);
     } else {
         RETURN_FALSE;
     }
@@ -1258,12 +1259,13 @@ PHP_METHOD(Redis, sadd)
 {
     zval *object;
     RedisSock *redis_sock;
-    char *key = NULL, *val = NULL, *cmd, *response;
+    char *key = NULL, *cmd, *response;
+    zval *val = NULL;
     int key_len, val_len, cmd_len, response_len;
 
-    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Oss",
+    if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Osz",
                                      &object, redis_ce, &key, &key_len,
-                                     &val, &val_len) == FAILURE) {
+                                     &val) == FAILURE) {
         RETURN_NULL();
     }
 
@@ -1271,7 +1273,7 @@ PHP_METHOD(Redis, sadd)
         RETURN_FALSE;
     }
 
-    cmd_len = spprintf(&cmd, 0, "SADD %s %d\r\n%s\r\n", key, strlen(val), val);
+    cmd_len = Redis_spprintf_key_value(&cmd, 0, "SADD %s %d\r\n%s\r\n", key, val);
 
     if (redis_sock_write(redis_sock, cmd) < 0) {
         RETURN_FALSE;
@@ -1488,10 +1490,57 @@ PHP_METHOD(Redis, sort)
 }
 /* }}} */
 
-static char* Redis_serialize_value(zval value, long flags) {
-  
-}
+PHPAPI int Redis_spprintf_key_value(char **pbuf, size_t max_len, const char *format, char *key, zval *value) /* {{{ */
+{
+	php_serialize_data_t value_hash;
+	smart_str buf = {0};
+  int retval = -1;
 
-static zval Redis_deserialize_value(char* value) {
-  
+	switch (Z_TYPE_P(value)) {
+		case IS_STRING:
+        retval = spprintf(pbuf, max_len, format, key, Z_STRLEN_P(value) TSRMLS_CC, Z_STRVAL_P(value));
+			break;
+
+		case IS_LONG:
+		case IS_DOUBLE:
+		case IS_BOOL: {
+			zval value_copy;
+
+			/* FIXME: we should be using 'Z' instead of this, but unfortunately it's PHP5-only */
+			value_copy = *value;
+			zval_copy_ctor(&value_copy);
+			convert_to_string(&value_copy);
+			
+      retval = spprintf(pbuf, max_len, format, key, Z_STRLEN(value_copy) TSRMLS_CC, Z_STRVAL(value_copy));
+
+			zval_dtor(&value_copy);
+			break;
+		}
+
+		default: {
+			zval value_copy, *value_copy_ptr;
+
+			/* FIXME: we should be using 'Z' instead of this, but unfortunately it's PHP5-only */
+			value_copy = *value;
+			zval_copy_ctor(&value_copy);
+			value_copy_ptr = &value_copy;
+
+			PHP_VAR_SERIALIZE_INIT(value_hash);
+			php_var_serialize(&buf, &value_copy_ptr, &value_hash TSRMLS_CC);
+			PHP_VAR_SERIALIZE_DESTROY(value_hash);
+
+			if (!buf.c) {
+				/* something went really wrong */
+				zval_dtor(&value_copy);
+				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to serialize value");
+				return -1;
+			}
+
+			zval_dtor(&value_copy);
+			
+      retval = spprintf(pbuf, max_len, format, key, buf.len TSRMLS_CC, buf.c);
+		}
+	}
+	
+  return retval;
 }
